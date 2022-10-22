@@ -41,7 +41,7 @@ def interpolate_latent_space(gen, path):
     X, Y = torch.meshgrid(
         torch.linspace(-1, 1, 10),
         torch.linspace(-1, 1, 10),
-        'ij',
+        indexing='ij',
     )
     reshaped_grid = torch.hstack((
         X.reshape(-1, 1),
