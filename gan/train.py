@@ -12,7 +12,10 @@ def build_transforms():
     # TODO 1.2: Add two transforms:
     # 1. Convert input image to tensor.
     # 2. Rescale input image to be between -1 and 1.
-    ds_transforms = transforms.Compose([..., ...])
+    ds_transforms = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+    ])
     return ds_transforms
 
 
@@ -24,10 +27,38 @@ def get_optimizers_and_schedulers(gen, disc):
     # The learning rate for the discriminator should be decayed to 0 over 500K steps.
     # The learning rate for the generator should be decayed to 0 over 100K steps.
 
-    optim_discriminator = ...
-    scheduler_discriminator = ...
-    optim_generator = ...
-    scheduler_generator = ...
+    optim_discriminator = torch.optim.Adam(disc.parameters(),
+                                           0.0002,
+                                           (0, 0.9))
+    scheduler_discriminator = torch.optim.lr_scheduler.ChainedScheduler([
+        torch.optim.lr_scheduler.LinearLR(
+            optim_discriminator,
+            1.0,
+            1 / 5e5,
+            5e5,
+        ),
+        torch.optim.lr_scheduler.ConstantLR(
+            optim_discriminator,
+            0,
+            5e5,
+        ),
+    ])
+    optim_generator = torch.optim.Adam(gen.parameters(),
+                                       0.0002,
+                                       (0, 0.9))
+    scheduler_generator = torch.optim.lr_scheduler.ChainedScheduler([
+        torch.optim.lr_scheduler.LinearLR(
+            optim_generator,
+            1.0,
+            1 / 1e5,
+            1e5,
+        ),
+        torch.optim.lr_scheduler.ConstantLR(
+            optim_generator,
+            0,
+            1e5,
+        ),
+    ])
     return (
         optim_discriminator,
         scheduler_discriminator,
@@ -92,8 +123,8 @@ def train_model(
                 # 1. Compute generator output -> the number of samples must match the batch size.
                 # 2. Compute discriminator output on the train batch.
                 # 3. Compute the discriminator output on the generated data.
-                discrim_real = ...
-                discrim_fake = ...
+                discrim_real = disc(train_batch)
+                discrim_fake = disc(gen(len(train_batch)))
 
                 # TODO: 1.5 Compute the interpolated batch and run the discriminator on it.
                 # To compute interpolated data, draw eps ~ Uniform(0, 1)
@@ -112,7 +143,7 @@ def train_model(
             if iters % 5 == 0:
                 with torch.cuda.amp.autocast():
                     # TODO 1.2: Compute samples and evaluate under discriminator.
-                    discrim_fake = ...
+                    discrim_fake = disc(gen(len(train_batch)))
 
                     generator_loss = gen_loss_fn(discrim_fake)
                 optim_generator.zero_grad(set_to_none=True)
@@ -124,7 +155,7 @@ def train_model(
                 with torch.no_grad():
                     with torch.cuda.amp.autocast():
                         # TODO 1.2: Generate samples using the generator, make sure they lie in the range [0, 1].
-                        generated_samples = ...
+                        generated_samples = gen(len(train_batch)) * 0.5 + 0.5
 
                     save_image(
                         generated_samples.data.float(),
