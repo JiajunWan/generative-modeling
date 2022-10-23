@@ -1,11 +1,13 @@
 from glob import glob
 import os
+from tabnanny import verbose
 import torch
 from utils import get_fid, interpolate_latent_space, save_plot
 from torchvision import transforms
 from torchvision.utils import save_image
 from PIL import Image
 from torchvision.datasets import VisionDataset
+from tqdm import tqdm
 
 
 def build_transforms():
@@ -30,35 +32,42 @@ def get_optimizers_and_schedulers(gen, disc):
     optim_discriminator = torch.optim.Adam(disc.parameters(),
                                            0.0002,
                                            (0, 0.9))
-    scheduler_discriminator = torch.optim.lr_scheduler.ChainedScheduler([
-        torch.optim.lr_scheduler.LinearLR(
-            optim_discriminator,
-            1.0,
-            1 / 5e5,
-            5e5,
-        ),
-        torch.optim.lr_scheduler.ConstantLR(
-            optim_discriminator,
-            0,
-            5e5,
-        ),
-    ])
+    scheduler_discriminator = torch.optim.lr_scheduler.SequentialLR(
+        optim_discriminator,
+        [
+            torch.optim.lr_scheduler.LinearLR(
+                optim_discriminator,
+                1.0,
+                1 / 5e5,
+                5e5,
+            ),
+            torch.optim.lr_scheduler.LambdaLR(
+                optim_discriminator,
+                lambda x: 0 if x > 5e5 else 1,
+            )
+        ],
+        [int(5e5)],
+    )
+
     optim_generator = torch.optim.Adam(gen.parameters(),
                                        0.0002,
                                        (0, 0.9))
-    scheduler_generator = torch.optim.lr_scheduler.ChainedScheduler([
-        torch.optim.lr_scheduler.LinearLR(
-            optim_generator,
-            1.0,
-            1 / 1e5,
-            1e5,
-        ),
-        torch.optim.lr_scheduler.ConstantLR(
-            optim_generator,
-            0,
-            1e5,
-        ),
-    ])
+    scheduler_generator = torch.optim.lr_scheduler.SequentialLR(
+        optim_generator,
+        [
+            torch.optim.lr_scheduler.LinearLR(
+                optim_generator,
+                1.0,
+                1 / 1e5,
+                1e5,
+            ),
+            torch.optim.lr_scheduler.LambdaLR(
+                optim_generator,
+                lambda x: 0 if x > 1e5 else 1,
+            )
+        ],
+        [1e5],
+    )
     return (
         optim_discriminator,
         scheduler_discriminator,

@@ -1,5 +1,4 @@
 import os
-# os.environ["PYTORCH_JIT"] = "0"
 
 import torch
 
@@ -13,16 +12,14 @@ def compute_discriminator_loss(
 ):
     # TODO 1.3.1: Implement GAN loss for discriminator.
     # Do not use discrim_interp, interp, lamb. They are placeholders for Q1.5.
-    real = torch.ones_like(discrim_real)
-    fake = torch.zeros_like(discrim_fake)
     loss = F.binary_cross_entropy_with_logits(
         torch.hstack((
             discrim_real,
             discrim_fake,
         )),
         torch.hstack((
-            real,
-            fake,
+            torch.ones_like(discrim_real),
+            torch.zeros_like(discrim_fake),
         )),
     )
     return loss
