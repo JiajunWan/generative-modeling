@@ -29,9 +29,11 @@ def get_optimizers_and_schedulers(gen, disc):
     # The learning rate for the discriminator should be decayed to 0 over 500K steps.
     # The learning rate for the generator should be decayed to 0 over 100K steps.
 
-    optim_discriminator = torch.optim.Adam(disc.parameters(),
-                                           0.0002,
-                                           (0, 0.9))
+    optim_discriminator = torch.optim.Adam(
+        disc.parameters(),
+        0.0002,
+        (0, 0.9)
+    )
     scheduler_discriminator = torch.optim.lr_scheduler.SequentialLR(
         optim_discriminator,
         [
@@ -46,12 +48,14 @@ def get_optimizers_and_schedulers(gen, disc):
                 lambda x: 0 if x > 5e5 else 1,
             )
         ],
-        [int(5e5)],
+        [5e5],
     )
 
-    optim_generator = torch.optim.Adam(gen.parameters(),
-                                       0.0002,
-                                       (0, 0.9))
+    optim_generator = torch.optim.Adam(
+        gen.parameters(),
+        0.0002,
+        (0, 0.9)
+    )
     scheduler_generator = torch.optim.lr_scheduler.SequentialLR(
         optim_generator,
         [
