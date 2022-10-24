@@ -34,7 +34,6 @@ class UpSampleConv2D(jit.ScriptModule):
         # 3. Apply convolution.
         # Hint for 2. look at
         # https://pytorch.org/docs/master/generated/torch.nn.PixelShuffle.html#torch.nn.PixelShuffle
-        # x = torch.repeat_interleave(x, self.upscale_factor ** 2, 1)
         x = x.repeat(1, self.upscale_factor * self.upscale_factor, 1, 1)
         x = self.pixel_shuffle(x)
         x = self.conv(x)
@@ -389,6 +388,7 @@ class Discriminator(jit.ScriptModule):
         # TODO 1.1: Forward the discriminator assuming a batch of images have been passed in.
         # Make sure to flatten the output of the convolutional layers and sum across the image dimensions before passing to the output layer!
         x = self.layers(x)
-        x = torch.sum(x, (2, 3))
+        x = torch.flatten(x, 2, 3)
+        x = torch.sum(x, 2)
         x = self.dense(x)
         return x
