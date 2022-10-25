@@ -12,6 +12,7 @@ from matplotlib import pyplot as plt
 import time
 import os
 from utils import *
+import wandb
 
 
 def ae_loss(model, x):
@@ -19,8 +20,9 @@ def ae_loss(model, x):
     TODO 2.1.2: fill in MSE loss between x and its reconstruction. 
     return loss, {recon_loss = loss} 
     """
-    loss = None
-
+    output = model.encoder(x)
+    output = model.decoder(output)
+    loss = F.mse_loss(output, x, reduction='sum') / len(x)
     return loss, OrderedDict(recon_loss=loss)
 
 def vae_loss(model, x, beta = 1):
@@ -103,6 +105,7 @@ def main(log_dir, loss_mode = 'vae', beta_mode = 'constant', num_epochs = 20, ba
         val_metrics = get_val_metrics(model, loss_mode, val_loader)
 
         #TODO : add plotting code for metrics (required for multiple parts)
+        wandb.log({'recon_loss': val_metrics['recon_loss']}, step=epoch + 1)
 
         if (epoch+1)%eval_interval == 0:
             print(epoch, train_metrics)
@@ -114,14 +117,14 @@ def main(log_dir, loss_mode = 'vae', beta_mode = 'constant', num_epochs = 20, ba
 
 
 if __name__ == '__main__':
-    pass
+    wandb.init(project="vlr-hw2")
     #TODO: Experiments to run : 
     #2.1 - Auto-Encoder
     #Run for latent_sizes 16, 128 and 1024
-    #main('ae_latent1024', loss_mode = 'ae',  num_epochs = 20, latent_size = 1024)
+    # main('ae_latent1024', loss_mode = 'ae',  num_epochs = 20, latent_size = 1024)
 
     #Q 2.2 - Variational Auto-Encoder
-    #main('vae_latent1024', loss_mode = 'vae', num_epochs = 20, latent_size = 1024)
+    main('vae_latent1024', loss_mode = 'vae', num_epochs = 20, latent_size = 1024)
 
     #Q 2.3.1 - Beta-VAE (constant beta)
     #Run for beta values 0.8, 1.2
