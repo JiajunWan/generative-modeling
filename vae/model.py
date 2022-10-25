@@ -54,7 +54,7 @@ class VAEEncoder(Encoder):
         # TODO 2.2.1: forward pass through the network.
         # should return a tuple of 2 tensors, each of dimension self.latent_dim
         x = self.convs(x)
-        x = torch.flatten(x, 1, 2)
+        x = torch.flatten(x, 1, 3)
         x = self.fc(x)
         x1 = x[:, self.latent_dim:]
         x2 = x[:, :self.latent_dim]

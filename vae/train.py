@@ -27,11 +27,16 @@ def ae_loss(model, x):
 
 def vae_loss(model, x, beta = 1):
     """TODO 2.2.2 : Fill in recon_loss and kl_loss. """
+    mu, logvar = model.encoder(x)
+    std = torch.exp(logvar / 2)
+    var = torch.exp(logvar)
+    eps = torch.randn_like(std).cuda()
+    z = mu + std * eps
+    output = model.decoder(z)
+    recon_loss = F.mse_loss(output, x, reduction='sum') / len(x)
+    kl_loss = torch.mean(-0.5 * torch.sum(1 + logvar - mu ** 2 - var, 1))
 
-    recon_loss = ...
-    kl_loss = ...
-
-    total_loss = recon_loss + beta*kl_loss
+    total_loss = recon_loss + beta * kl_loss
     return total_loss, OrderedDict(recon_loss=recon_loss, kl_loss=kl_loss)
 
 
@@ -105,7 +110,12 @@ def main(log_dir, loss_mode = 'vae', beta_mode = 'constant', num_epochs = 20, ba
         val_metrics = get_val_metrics(model, loss_mode, val_loader)
 
         #TODO : add plotting code for metrics (required for multiple parts)
-        wandb.log({'recon_loss': val_metrics['recon_loss']}, step=epoch + 1)
+        wandb.log({
+                'recon_loss': val_metrics['recon_loss'],
+                'kl_loss': val_metrics['kl_loss'],
+            },
+            step=epoch + 1,
+        )
 
         if (epoch+1)%eval_interval == 0:
             print(epoch, train_metrics)
@@ -124,11 +134,11 @@ if __name__ == '__main__':
     # main('ae_latent1024', loss_mode = 'ae',  num_epochs = 20, latent_size = 1024)
 
     #Q 2.2 - Variational Auto-Encoder
-    main('vae_latent1024', loss_mode = 'vae', num_epochs = 20, latent_size = 1024)
+    # main('vae_latent1024', loss_mode = 'vae', num_epochs = 20, latent_size = 1024)
 
     #Q 2.3.1 - Beta-VAE (constant beta)
     #Run for beta values 0.8, 1.2
-    #main('vae_latent1024_beta_constant0.8', loss_mode = 'vae', beta_mode = 'constant', target_beta_val = 0.8, num_epochs = 20, latent_size = 1024)
+    main('vae_latent1024_beta_constant1.2', loss_mode = 'vae', beta_mode = 'constant', target_beta_val = 1.2, num_epochs = 20, latent_size = 1024)
 
     #Q 2.3.2 - VAE with annealed beta (linear schedule)
     # main(
