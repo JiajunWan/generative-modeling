@@ -49,7 +49,7 @@ def linear_beta_scheduler(max_epochs=None, target_val = 1):
     """TODO 2.3.2 : Fill in helper. The value returned should increase linearly 
     from 0 at epoch 0 to target_val at epoch max_epochs """
     def _helper(epoch):
-       ...
+       return target_val * (epoch / max_epochs)
     return _helper
 
 def run_train_epoch(model, loss_mode, train_loader, optimizer, beta = 1, grad_clip = 1):
@@ -138,10 +138,10 @@ if __name__ == '__main__':
 
     #Q 2.3.1 - Beta-VAE (constant beta)
     #Run for beta values 0.8, 1.2
-    main('vae_latent1024_beta_constant1.2', loss_mode = 'vae', beta_mode = 'constant', target_beta_val = 1.2, num_epochs = 20, latent_size = 1024)
+    # main('vae_latent1024_beta_constant1.2', loss_mode = 'vae', beta_mode = 'constant', target_beta_val = 1.2, num_epochs = 20, latent_size = 1024)
 
     #Q 2.3.2 - VAE with annealed beta (linear schedule)
-    # main(
-    #     'vae_latent1024_beta_linear1', loss_mode = 'vae', beta_mode = 'linear', 
-    #     target_beta_val = 1, num_epochs = 20, latent_size = 1024
-    # )
+    main(
+        'vae_latent1024_beta_linear1', loss_mode = 'vae', beta_mode = 'linear', 
+        target_beta_val = 1, num_epochs = 20, latent_size = 1024
+    )
